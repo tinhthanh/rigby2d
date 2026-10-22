@@ -8,6 +8,6 @@ import { buildWalk } from '../../tools/walkcycle.mjs';
 
 const folder = fileURLToPath(new URL('.', import.meta.url));
 const checks = await buildWalk(folder, 'adventurer_side.psd', 'adventurer_side.rigby', {
-  cycle: 0.95, stride: 0.26, crouch: 0.025, bob: 0.014, arm: 18, hair: 5, trail: 10,
+  cycle: 0.95, stride: 0.26, crouch: 0.025, bob: 0.014, arm: 24, elbow: 0.025, wrist: 14, hair: 5, trail: 10,
 });
 console.log(JSON.stringify(checks));

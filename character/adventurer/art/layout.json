@@ -55,20 +55,6 @@
     738
    ]
   },
-  "arm": {
-   "k": 4,
-   "scale": 1.8,
-   "anchor": [
-    "edge",
-    "top",
-    0.04,
-    0.06
-   ],
-   "at": [
-    456,
-    470
-   ]
-  },
   "leg": {
    "k": 5,
    "scale": 1.52,
@@ -108,6 +94,42 @@
      42
     ]
    }
+  },
+  "sleeve": {
+   "k": 4,
+   "scale": 1.8,
+   "anchor": [
+    "edge",
+    "top",
+    0.04,
+    0.06
+   ],
+   "at": [
+    456,
+    470
+   ],
+   "keep_rows": [
+    0,
+    0.765
+   ]
+  },
+  "hand": {
+   "k": 4,
+   "scale": 1.8,
+   "anchor": [
+    "edge",
+    "top",
+    0.04,
+    0.06
+   ],
+   "at": [
+    456,
+    470
+   ],
+   "keep_rows": [
+    0.72,
+    1
+   ]
   }
  },
  "layers": [
@@ -148,8 +170,12 @@
    "part": "scarf"
   },
   {
+   "name": "hand_r",
+   "part": "hand"
+  },
+  {
    "name": "arm_r",
-   "part": "arm"
+   "part": "sleeve"
   }
  ]
 }

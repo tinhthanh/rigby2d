@@ -14,8 +14,9 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
 3. **Assemble.** `python tools/art/assemble.py layout.json parts/ model.png layers/` scales each
    piece to the model, finds its anchor from its own silhouette (`edge` top/bottom centre, or
    `center`) and puts it on the model point given in `at` (model pixels). `crop_top`,
-   `crop_bottom` and `fade_bottom` trim rims that would show at joints; `recolor: {from, to}` scales a
-   piece's colours when it was drawn in the wrong shade; `far: true` darkens the far limbs; `merge: [parts]` makes one layer of several parts (an arm with its hand, so the wrist
+   `crop_bottom` and `fade_bottom` trim rims that would show at joints; `keep_rows: [from, to]` keeps a
+   band of a placed piece (a hand cut from a whole arm, so it can turn at the wrist under the
+   cuff); `recolor: {from, to}` scales a piece's colours when it was drawn in the wrong shade; `far: true` darkens the far limbs; `merge: [parts]` makes one layer of several parts (an arm with its hand, so the wrist
    never opens); layer order is bottom first. `layers/preview.png` shows model, assembly and overlay.
    Name layers for AutoRig: `head`, `hair_bun`, `torso`, `arm_l`, `hand_l`, `leg_l`, `foot_l`, ...
 4. **PSD.** `node tools/art/topsd.mjs layers/layers.json character.psd`.

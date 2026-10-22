@@ -56,7 +56,13 @@ def placed(part, far=False, dx=0):
         rgb = ImageEnhance.Brightness(im.convert('RGB')).enhance(cfg['far_brightness']); rgb.putalpha(im.getchannel('A')); im = rgb
     ax, ay = anchor(np.asarray(im.getchannel('A')) > 128, p['anchor'])
     tx, ty = p['at']
-    return im, (tx * K + dx - ax, ty * K - ay)
+    at = (tx * K + dx - ax, ty * K - ay)
+    if p.get('keep_rows'):
+        # Keep only a band of the placed piece (shares of its height), e.g. a hand cut from an arm
+        # drawn in one piece: it stays exactly where it was drawn.
+        bb = im.getbbox(); r0, r1 = (bb[1] + round((bb[3] - bb[1]) * f) for f in p['keep_rows'])
+        im = im.crop((0, r0, im.width, r1)); at = (at[0], at[1] + r0)
+    return im, at
 
 layers = []
 for L in cfg['layers']:

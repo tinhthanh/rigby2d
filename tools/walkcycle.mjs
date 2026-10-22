@@ -4,7 +4,8 @@
 // - legs: the foot IK targets follow a stance (planted, sliding back at body speed) and a swing
 //   (lifted arc) phase, with heel strike / flat / toe off foot roll
 // - body: hip bob (lowest after contact, highest at mid-stance), forward lean, delayed head
-// - arms: pendulum arcs about the shoulder on the hand IK targets, slightly behind the legs
+// - arms: pendulum arcs about the shoulder on the hand IK targets, slightly behind the legs; a
+//   separate hand bone drags behind the swing (a relaxed wrist)
 // - hair, scarves and tails (`hair`, `hair1`, `hair2`, `tail1`... bones): bounce behind the body,
 //   each link of a chain later and wider than the one before, so it ripples like cloth
 // Pass 1 keys the body and legs; pass 2 samples the posed shoulders and feet to key the arms and
@@ -28,8 +29,8 @@ const mod1 = (x) => ((x % 1) + 1) % 1;
 /**
  * AutoRigs `psd` into `out` (inside `folder`) and keys `walk` and `walk_across`. Options (all
  * optional): cycle (s), keys (per cycle), cycles (of walk_across), stance (share), stride, lift,
- * bob, crouch (fractions of the leg length, or pixels when absolute: true), heel, toeOff, arm
- * (degrees), hair (degrees of bounce), trail (degrees a hanging chain leans back while walking).
+ * bob, crouch (fractions of the leg length, or pixels when absolute: true), heel, toeOff, arm,
+ * wrist (degrees), elbow (share the reach shortens at the front of the swing), hair (degrees of bounce), trail (degrees a hanging chain leans back while walking).
  * Returns the validation checks.
  */
 export async function buildWalk(folder, psd, out, options = {}) {
@@ -47,9 +48,10 @@ export async function buildWalk(folder, psd, out, options = {}) {
     const m = /^(?:hair|tail)(?:_[lr])?(\d*)$/.exec(b.name);
     return m ? [[b.name, m[1] ? Number(m[1]) - 1 : 0]] : [];
   });
-  const hasArm = (side) => rig.bones.some((b) => b.name === `ik_hand_${side}`);
+  const hasBone = (name) => rig.bones.some((b) => b.name === name);
+  const hasArm = (side) => hasBone(`ik_hand_${side}`);
 
-  const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, hair: 6, trail: 0, ...options };
+  const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, elbow: 0.07, wrist: 0, hair: 6, trail: 0, ...options };
   const legLen = length('thigh_l') + length('shin_l');
   const size = (v) => (o.absolute ? v : v * legLen);
   const S = size(o.stride), LIFT = size(o.lift), BOB = size(o.bob), CROUCH = size(o.crouch);
@@ -128,6 +130,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
       for (const side of ['l', 'r']) {
         key(`foot_${side}`, 'rotate', t, { value: s.foot[side] }, last);
         if (s.hand[side]) key(`ik_hand_${side}`, 'translate', t, s.hand[side], last);
+        if (s.wrist[side] !== undefined) key(`hand_${side}`, 'rotate', t, { value: s.wrist[side] }, last);
       }
     }
     await call('batch_edit', { operations: ops });
@@ -137,7 +140,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
   const sampled = [];
   for (let k = 0; k < KEYS; k++) {
     const ph = k / KEYS, pose = await call('sample_pose', { animation: 'walk', time: ph * CYCLE });
-    const s = { foot: {}, hand: {} };
+    const s = { foot: {}, hand: {}, wrist: {} };
     for (const [side, off, sign] of [['l', 0, -1], ['r', 0.5, 1]]) {
       // Foot: the world angle the roll asks for, minus what the shin already gives it.
       const d = foot[side].angle + leg(mod1(ph + off), side).roll - bone(pose, `foot_${side}`).rotation;
@@ -149,9 +152,11 @@ export async function buildWalk(folder, psd, out, options = {}) {
       th *= th > 0 ? 1.15 : 0.85;
       const sh = bone(pose, `upperarm_${side}`), sh0 = bone(setup, `upperarm_${side}`), tg0 = bone(setup, `ik_hand_${side}`);
       const reach0 = Math.hypot(tg0.x - sh0.x, tg0.y - sh0.y), th0 = Math.atan2(tg0.x - sh0.x, sh0.y - tg0.y) / D;
-      const R = reach0 * (0.985 - 0.07 * Math.max(0, th / o.arm));
+      const R = reach0 * (0.985 - o.elbow * Math.max(0, th / o.arm)); // the elbow bends as the arm swings forward
       const a = (th0 + th) * D;
       s.hand[side] = { x: sh.x + R * Math.sin(a) - tg0.x, y: sh.y - R * Math.cos(a) - tg0.y };
+      // Wrist: the hand trails the arm's motion a little later (negative turns the fingers back).
+      if (o.wrist && hasBone(`hand_${side}`)) s.wrist[side] = sign * o.wrist * Math.sin(2 * Math.PI * (ph - 0.12));
     }
     sampled.push(s);
   }

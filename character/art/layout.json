@@ -1,0 +1,158 @@
+{
+ "upscale": 2,
+ "far_brightness": 0.78,
+ "parts": {
+  "head": {
+   "k": 0,
+   "scale": 1.04,
+   "anchor": [
+    "edge",
+    "bottom",
+    0.04,
+    0.02
+   ],
+   "at": [
+    470,
+    550
+   ]
+  },
+  "bun": {
+   "k": 1,
+   "scale": 1.06,
+   "anchor": [
+    "center"
+   ],
+   "at": [
+    272,
+    158
+   ]
+  },
+  "body": {
+   "k": 2,
+   "scale": 0.92,
+   "anchor": [
+    "edge",
+    "top",
+    0.03,
+    0.0
+   ],
+   "at": [
+    478,
+    545
+   ],
+   "fade_bottom": 0.08,
+   "crop_bottom": 0.4
+  },
+  "arm": {
+   "k": 3,
+   "scale": 0.75,
+   "anchor": [
+    "edge",
+    "top",
+    0.05,
+    0.06
+   ],
+   "at": [
+    458,
+    585
+   ],
+   "crop_bottom": 0.04
+  },
+  "hand": {
+   "k": 5,
+   "scale": 0.71,
+   "anchor": [
+    "edge",
+    "top",
+    0.05,
+    0.05
+   ],
+   "at": [
+    458,
+    822
+   ]
+  },
+  "leg": {
+   "k": 4,
+   "scale": 0.8,
+   "anchor": [
+    "edge",
+    "top",
+    0.05,
+    0.1
+   ],
+   "at": [
+    492,
+    768
+   ]
+  },
+  "foot": {
+   "k": 6,
+   "scale": 0.75,
+   "anchor": [
+    "edge",
+    "top",
+    0.05,
+    0.12
+   ],
+   "at": [
+    505,
+    1062
+   ]
+  }
+ },
+ "layers": [
+  {
+   "name": "hand_l",
+   "part": "hand",
+   "far": true,
+   "dx": -30
+  },
+  {
+   "name": "arm_l",
+   "part": "arm",
+   "far": true,
+   "dx": -30
+  },
+  {
+   "name": "foot_l",
+   "part": "foot",
+   "far": true,
+   "dx": -30
+  },
+  {
+   "name": "leg_l",
+   "part": "leg",
+   "far": true,
+   "dx": -30
+  },
+  {
+   "name": "torso",
+   "part": "body"
+  },
+  {
+   "name": "foot_r",
+   "part": "foot"
+  },
+  {
+   "name": "leg_r",
+   "part": "leg"
+  },
+  {
+   "name": "hair_bun",
+   "part": "bun"
+  },
+  {
+   "name": "head",
+   "part": "head"
+  },
+  {
+   "name": "hand_r",
+   "part": "hand"
+  },
+  {
+   "name": "arm_r",
+   "part": "arm"
+  }
+ ]
+}

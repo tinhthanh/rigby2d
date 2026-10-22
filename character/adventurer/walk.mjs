@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Rebuilds character/adventurer/adventurer_side.rigby from adventurer_side.psd with its walk cycles
 // (see tools/walkcycle.mjs). The scarf end is a two-bone chain that trails back and ripples. The
-// arm is five drawings (swung forward with the elbow bent, half forward, hanging, half back, swung
-// back) that dissolve into each other as it swings (see tools/limbswap.mjs); art/arm_poses.json
-// comes from tools/art/limbposes.py.
+// arm is seven drawings along its swing (forward with the elbow bending, hanging, back with the
+// arm straight) that swap as it swings (see tools/limbswap.mjs); art/arm_poses.json comes from
+// tools/art/limbposes.py.
 // Usage: node character/adventurer/walk.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +17,7 @@ const measured = JSON.parse(fs.readFileSync(path.join(folder, 'art/arm_poses.jso
 // length of the arm piece it replaces (354 px in parts.png, placed at scale 1.8).
 const mid = measured.find((p) => p.name === 'arm_r_mid');
 const limbPoses = {
-  side: 'r', slot: 'arm_r', bone: 'upperarm_r', ik: 'ik_hand_r', hide: ['hand_r'], blend: true,
+  side: 'r', slot: 'arm_r', bone: 'upperarm_r', ik: 'ik_hand_r', hide: ['hand_r'],
   scale: (354 * 1.8) / mid.length,
   poses: measured.map((p) => ({ ...p, file: path.join(folder, p.file), swing: p.angle })),
 };

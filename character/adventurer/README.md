@@ -26,7 +26,7 @@ cut-out rig.
 | --- | --- |
 | `art/model.png` | The standard: the whole character in side view, standing. Sets proportions and positions |
 | `art/parts.png` | The same character cut into pieces |
-| `art/arms.png`, `art/arms/`, `art/arm_poses.json` | The five arm drawings, cut and measured (pivot at the shoulder, drawn angle) |
+| `art/arms.png`, `art/arms_mid.png`, `art/arms/`, `art/arm_poses.json` | The seven arm drawings, cut and measured (pivot at the shoulder, drawn angle) |
 | `art/layout.json` | How the pieces sit on the model (the boot foot is recoloured to match the shaft) |
 | `adventurer_side.psd` | The layered artwork built with `tools/art/` |
 | `adventurer_side.rigby` | AutoRigged, with `walk` (in place, 1 s) and `walk_across`. The editor opens it from *File ▸ Open walk demo (adventurer)* |

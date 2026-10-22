@@ -30,8 +30,9 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
 the forward swing) can be several drawings instead of one bending picture: cut them with `cut.py`,
 measure them with `python tools/art/limbposes.py poses.json name=piece.png ...` and pass them to
 `tools/walkcycle.mjs` as `limbPoses` (see `tools/limbswap.mjs` and `character/adventurer/walk.mjs`).
-Draw enough of them that neighbours differ only a little (five for an arm swing) and set
-`blend: true`, so they dissolve into each other instead of popping.
+Draw enough of them that neighbours differ only a little (seven for an arm swing, a few degrees
+apart): then a plain swap looks smooth. `blend: true` dissolves neighbours into each other
+instead, which helps when there are few drawings but shows double outlines mid-dissolve.
 
 `character/art/` (chibi girl) and `character/adventurer/art/` hold models, parts and layouts as
 examples. A costume that covers the joints (long sleeves, boots, a hem over the hips) hides the

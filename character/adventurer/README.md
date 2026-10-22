@@ -15,6 +15,10 @@ cut-out rig.
 - The long scarf end is a two-bone chain (`hair_scarf` → `hair1`, `hair2`) that trails back and
   ripples while walking.
 - Flat cel shading: pieces meet without soft-shading seams.
+- The walk follows human gait data (`gait: 'data'`, see `tools/gait.mjs`): hip and knee angles over
+  the cycle as measured in people, the foot planted flat with heel strike and toe off, and the
+  pelvis bob and forward surge worked out from the planted foot, so the timing is uneven like a
+  real walk instead of a smooth wave. The head nods a moment after each landing.
 
 | File | Use |
 | --- | --- |
@@ -23,5 +27,5 @@ cut-out rig.
 | `art/arms.png`, `art/arms/`, `art/arm_poses.json` | The three arm drawings, cut and measured (pivot at the shoulder, drawn angle) |
 | `art/layout.json` | How the pieces sit on the model (the boot foot is recoloured to match the shaft) |
 | `adventurer_side.psd` | The layered artwork built with `tools/art/` |
-| `adventurer_side.rigby` | AutoRigged, with `walk` (in place, 0.95 s) and `walk_across`. The editor opens it from *File ▸ Open walk demo (adventurer)* |
+| `adventurer_side.rigby` | AutoRigged, with `walk` (in place, 1 s) and `walk_across`. The editor opens it from *File ▸ Open walk demo (adventurer)* |
 | `walk.mjs` | Rebuilds the rig and both walks from the PSD: `node character/adventurer/walk.mjs` |

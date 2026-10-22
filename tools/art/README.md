@@ -21,7 +21,8 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
    Name layers for AutoRig: `head`, `hair_bun`, `torso`, `arm_l`, `hand_l`, `leg_l`, `foot_l`, ...
 4. **PSD.** `node tools/art/topsd.mjs layers/layers.json character.psd`.
 5. **Rig and walk.** `node tools/walkcycle.mjs <folder> character.psd character.rigby` (see
-   `character/walk.mjs` for per-character settings).
+   `character/walk.mjs` for per-character settings). `gait: 'data'` drives the legs and pelvis
+   from human gait data (`tools/gait.mjs`); it looks the most natural.
 6. **Preview.** `node tools/art/frames.mjs character.rigby walk 30 > f.json` then
    `python tools/art/gif.py f.json layers/ walk.gif 0.3 x0 x1 y0 y1 30` (world bounds, Y up).
 

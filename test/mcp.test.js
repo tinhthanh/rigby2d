@@ -131,7 +131,7 @@ test('mcp tools: inspect, describe and sample the Rigbytron project', async () =
 
 test('mcp tools: the side-view walk demos are valid and keep the planted foot on the ground', async () => {
   const { tools } = await toolbox();
-  for (const [side, cycle] of [['branding/rigbytron/rigbytron_side.rigby', 1], ['character/chibi_side.rigby', 0.9], ['character/adventurer/adventurer_side.rigby', 0.95]]) {
+  for (const [side, cycle] of [['branding/rigbytron/rigbytron_side.rigby', 1], ['character/chibi_side.rigby', 0.9], ['character/adventurer/adventurer_side.rigby', 1]]) {
     const report = await tools.validate_project({ path: side });
     assert.equal(report.valid, true, side);
     assert.deepEqual(report.warnings, [], side);

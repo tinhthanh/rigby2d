@@ -17,6 +17,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { gaitWalk } from './gait.mjs';
 import { fitLimbPoses, poseAt } from './limbswap.mjs';
 import { createEditTools } from '../src/mcp/edits.js';
 import { createRiggingTools } from '../src/mcp/rigging.js';
@@ -31,7 +32,8 @@ const mod1 = (x) => ((x % 1) + 1) % 1;
  * AutoRigs `psd` into `out` (inside `folder`) and keys `walk` and `walk_across`. Options (all
  * optional): cycle (s), keys (per cycle), cycles (of walk_across), stance (share), stride, lift,
  * bob, crouch (fractions of the leg length, or pixels when absolute: true), heel, toeOff, arm,
- * wrist (degrees), elbow (share the reach shortens at the front of the swing), hair (degrees of bounce), trail (degrees a hanging chain leans back while walking).
+ * gait ('data': legs and pelvis from human gait data, see tools/gait.mjs), gaitScale, nod (degrees the
+ * head nods after each landing, with gait 'data'), wrist (degrees), elbow (share the reach shortens at the front of the swing), hair (degrees of bounce), trail (degrees a hanging chain leans back while walking).
  * Returns the validation checks.
  */
 export async function buildWalk(folder, psd, out, options = {}) {
@@ -55,12 +57,38 @@ export async function buildWalk(folder, psd, out, options = {}) {
   const hasBone = (name) => rig.bones.some((b) => b.name === name);
   const hasArm = (side) => hasBone(`ik_hand_${side}`);
 
-  const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, elbow: 0.07, wrist: 0, hair: 6, trail: 0, ...options };
+  const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, elbow: 0.07, wrist: 0, hair: 6, trail: 0, nod: 3, ...options };
   const legLen = length('thigh_l') + length('shin_l');
   const size = (v) => (o.absolute ? v : v * legLen);
   const S = size(o.stride), LIFT = size(o.lift), BOB = size(o.bob), CROUCH = size(o.crouch);
   const { cycle: CYCLE, keys: KEYS, stance: STANCE } = o;
   const foot = Object.fromEntries(['l', 'r'].map((s) => [s, { len: o.footLen ?? length(`foot_${s}`), angle: o.footAngle ?? bone(setup, `foot_${s}`).rotation }]));
+
+  // gait: 'data' drives the legs and the pelvis from human gait data (see tools/gait.mjs) instead
+  // of the stance / swing curves below; gaitScale shrinks or grows the joint angles.
+  const model = o.gait === 'data' ? gaitWalk(Object.fromEntries(['l', 'r'].map((s) => {
+    const th = bone(setup, `thigh_${s}`), sh = bone(setup, `shin_${s}`), ft = bone(setup, `foot_${s}`);
+    return [s, {
+      hip: [th.x, th.y], thigh: length(`thigh_${s}`), shin: length(`shin_${s}`),
+      thighAngle: th.rotation, shinAngle: sh.rotation, footAngle: foot[s].angle, ankle: [ft.x, ft.y],
+      // The heel a little behind the ankle, on the ground (y = 0).
+      footLength: foot[s].len, heel: [ft.x - 0.2 * foot[s].len, 0],
+    }];
+  })), { scale: o.gaitScale ?? 1, heel: o.heel, toeOff: o.toeOff }) : null;
+  // Pelvis height over the cycle, for the head's follow-through (0 at the top, 1 at the bottom).
+  const lowness = (() => {
+    if (!model) return null;
+    const ys = Array.from({ length: 100 }, (_, i) => model.at(i / 100).pelvis[1]);
+    const lo = Math.min(...ys), hi = Math.max(...ys);
+    return (ph) => (hi - model.at(ph).pelvis[1]) / Math.max(1e-6, hi - lo);
+  })();
+
+  /** Ankle offset from its setup position and foot roll of a leg at walk phase ph. */
+  function legAt(ph, side, off) {
+    if (!model) return leg(mod1(ph + off), side);
+    const L = model.at(ph).legs[side];
+    return { x: L.ankle[0], y: L.ankle[1], roll: L.foot - foot[side].angle };
+  }
 
   /** Ankle offset from its setup position and foot roll for a leg at phase p (0 = heel strike). */
   function leg(p, side) {
@@ -89,6 +117,18 @@ export async function buildWalk(folder, psd, out, options = {}) {
 
   const body = (t) => {
     const w = Math.cos(4 * Math.PI * (t - 0.3)); // two bobs per cycle, highest at mid-stance
+    if (model) {
+      const [x, y] = model.at(t).pelvis;
+      return {
+        hip: { x, y },
+        hipRot: 0,
+        // The chest leans into the walk and settles a moment after each landing; the head nods
+        // later still (follow-through), most visible on a big head.
+        chest: -4 - 1.5 * lowness(t - 0.04),
+        head: 2 - o.nod * lowness(t - 0.09),
+        hair: (k) => o.hair * (1 + 0.5 * k) * (1 - 2 * lowness(t - 0.12 - 0.06 * k)) + (k === 0 ? -o.trail : -o.trail * 0.3),
+      };
+    }
     return {
       hip: { x: 0, y: -CROUCH + BOB * w },
       hipRot: 1.5 * Math.sin(4 * Math.PI * (t - 0.2)),
@@ -124,12 +164,12 @@ export async function buildWalk(folder, psd, out, options = {}) {
       }
       for (const [name, k] of chains) key(name, 'rotate', t, { value: b.hair(k) }, last);
       for (const [side, off] of [['l', 0], ['r', 0.5]]) {
-        const L = leg(mod1(ph + off), side);
+        const L = legAt(ph, side, off);
         key(`ik_foot_${side}`, 'translate', t, { x: L.x, y: L.y }, last);
       }
     }
     if (anim === 'walk_across') {
-      const speed = (2 * S) / (STANCE * CYCLE), half = dur / 2, X = (speed * half) / 2;
+      const speed = model ? model.stride / CYCLE : (2 * S) / (STANCE * CYCLE), half = dur / 2, X = (speed * half) / 2;
       for (const [t, x, c] of [[0, -X, 'linear'], [half, X, 'linear'], [dur, -X]]) ops.push({ op: 'set_bone_key', animation: anim, bone: 'root', channel: 'translate', time: t, x, y: 0, ...(c && { curve: c }) });
       // Mirror the whole character for the trip back.
       for (const [t, sx, c] of [[0, 1, 'stepped'], [half, -1, 'stepped'], [dur, -1]]) ops.push({ op: 'set_bone_key', animation: anim, bone: 'root', channel: 'scale', time: t, x: sx, y: 1, ...(c && { curve: c }) });
@@ -158,7 +198,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
     const s = { foot: {}, hand: {}, wrist: {} };
     for (const [side, off, sign] of [['l', 0, -1], ['r', 0.5, 1]]) {
       // Foot: the world angle the roll asks for, minus what the shin already gives it.
-      const d = foot[side].angle + leg(mod1(ph + off), side).roll - bone(pose, `foot_${side}`).rotation;
+      const d = foot[side].angle + legAt(ph, side, off).roll - bone(pose, `foot_${side}`).rotation;
       s.foot[side] = ((d + 540) % 360) - 180;
       // A side view often shows one arm only (the far one hides behind the body).
       if (!hasArm(side)) continue;

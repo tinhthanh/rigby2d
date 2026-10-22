@@ -3,11 +3,12 @@
 A character designed for skeletal animation: the costume hides the joints that show seams on a
 cut-out rig.
 
-- Long jacket sleeves cover the elbow and wrist. The arm is **five drawings** along its swing
-  (`art/arms.png`, cut into `art/arms/`): swung forward with the elbow bent and the hand curled,
-  half forward, hanging, half back, swung back with the arm straight. Neighbouring drawings
-  dissolve into each other over a few frames (a `arm_r_blend` slot above the arm), so the arm
-  never pops from one shape to the next. One picture bent by a mesh cannot change the
+- Long jacket sleeves cover the elbow and wrist. The arm is **seven drawings** along its swing
+  (`art/arms.png` and `art/arms_mid.png`, cut into `art/arms/`), each standing for the angle it
+  was drawn at: 20, 12 and 6 degrees forward (elbow bending, hand curling), hanging, 5, 10 and 19
+  degrees back (arm straight, hand open). Neighbours differ so little that the drawing simply
+  swaps; a dissolve (`blend: true`) was tried and left double sleeve outlines without being
+  smoother. One picture bent by a mesh cannot change the
   hand's shape or the sleeve's folds; drawings can. The upper arm bone rotates continuously and
   each drawing is turned to line up with it, so a swap changes the shape, never the direction
   (`tools/limbswap.mjs`, measured with `tools/art/limbposes.py` into `art/arm_poses.json`).

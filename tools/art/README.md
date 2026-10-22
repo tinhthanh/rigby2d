@@ -14,8 +14,8 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
 3. **Assemble.** `python tools/art/assemble.py layout.json parts/ model.png layers/` scales each
    piece to the model, finds its anchor from its own silhouette (`edge` top/bottom centre, or
    `center`) and puts it on the model point given in `at` (model pixels). `crop_top`,
-   `crop_bottom` and `fade_bottom` trim rims that would show at joints; `far: true` darkens the far
-   limbs; `merge: [parts]` makes one layer of several parts (an arm with its hand, so the wrist
+   `crop_bottom` and `fade_bottom` trim rims that would show at joints; `recolor: {from, to}` scales a
+   piece's colours when it was drawn in the wrong shade; `far: true` darkens the far limbs; `merge: [parts]` makes one layer of several parts (an arm with its hand, so the wrist
    never opens); layer order is bottom first. `layers/preview.png` shows model, assembly and overlay.
    Name layers for AutoRig: `head`, `hair_bun`, `torso`, `arm_l`, `hand_l`, `leg_l`, `foot_l`, ...
 4. **PSD.** `node tools/art/topsd.mjs layers/layers.json character.psd`.
@@ -24,4 +24,6 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
 6. **Preview.** `node tools/art/frames.mjs character.rigby walk 30 > f.json` then
    `python tools/art/gif.py f.json layers/ walk.gif 0.3 x0 x1 y0 y1 30` (world bounds, Y up).
 
-`character/art/` holds the model, parts and layout of the chibi girl as an example.
+`character/art/` (chibi girl) and `character/adventurer/art/` hold models, parts and layouts as
+examples. A costume that covers the joints (long sleeves, boots, a hem over the hips) hides the
+seams of a cut-out rig best; see `character/adventurer/README.md`.

@@ -1,0 +1,155 @@
+{
+ "upscale": 2,
+ "far_brightness": 0.8,
+ "parts": {
+  "head": {
+   "k": 0,
+   "scale": 2.15,
+   "anchor": [
+    "edge",
+    "bottom",
+    0.04,
+    0.02
+   ],
+   "at": [
+    474,
+    466
+   ]
+  },
+  "scarf": {
+   "k": 1,
+   "scale": 1.7,
+   "anchor": [
+    "center"
+   ],
+   "at": [
+    468,
+    442
+   ]
+  },
+  "scarf_tail": {
+   "k": 2,
+   "scale": 1.7,
+   "anchor": [
+    "edge",
+    "top",
+    0.04,
+    0.03
+   ],
+   "at": [
+    398,
+    468
+   ]
+  },
+  "body": {
+   "k": 3,
+   "scale": 2.1,
+   "anchor": [
+    "edge",
+    "bottom",
+    0.04,
+    0.02
+   ],
+   "at": [
+    462,
+    738
+   ]
+  },
+  "arm": {
+   "k": 4,
+   "scale": 1.8,
+   "anchor": [
+    "edge",
+    "top",
+    0.04,
+    0.06
+   ],
+   "at": [
+    456,
+    470
+   ]
+  },
+  "leg": {
+   "k": 5,
+   "scale": 1.52,
+   "anchor": [
+    "edge",
+    "top",
+    0.04,
+    0.08
+   ],
+   "at": [
+    462,
+    745
+   ]
+  },
+  "foot": {
+   "k": 6,
+   "scale": 2.04,
+   "anchor": [
+    "edge",
+    "top",
+    0.06,
+    0.1
+   ],
+   "at": [
+    470,
+    1072
+   ],
+   "recolor": {
+    "from": [
+     72,
+     54,
+     41
+    ],
+    "to": [
+     125,
+     73,
+     42
+    ]
+   }
+  }
+ },
+ "layers": [
+  {
+   "name": "foot_l",
+   "part": "foot",
+   "far": true,
+   "dx": -36
+  },
+  {
+   "name": "leg_l",
+   "part": "leg",
+   "far": true,
+   "dx": -36
+  },
+  {
+   "name": "foot_r",
+   "part": "foot"
+  },
+  {
+   "name": "leg_r",
+   "part": "leg"
+  },
+  {
+   "name": "torso",
+   "part": "body"
+  },
+  {
+   "name": "hair_scarf",
+   "part": "scarf_tail"
+  },
+  {
+   "name": "head",
+   "part": "head"
+  },
+  {
+   "name": "scarf",
+   "part": "scarf"
+  },
+  {
+   "name": "arm_r",
+   "part": "arm"
+  }
+ ]
+}

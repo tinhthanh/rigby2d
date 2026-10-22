@@ -5,7 +5,8 @@
 //   (lifted arc) phase, with heel strike / flat / toe off foot roll
 // - body: hip bob (lowest after contact, highest at mid-stance), forward lean, delayed head
 // - arms: pendulum arcs about the shoulder on the hand IK targets, slightly behind the legs
-// - hair (if the rig has a `hair` bone): bounces behind the body
+// - hair, scarves and tails (`hair`, `hair1`, `hair2`, `tail1`... bones): bounce behind the body,
+//   each link of a chain later and wider than the one before, so it ripples like cloth
 // Pass 1 keys the body and legs; pass 2 samples the posed shoulders and feet to key the arms and
 // the foot roll. Sizes default to fractions of the leg length, so one call fits any character.
 //
@@ -28,7 +29,8 @@ const mod1 = (x) => ((x % 1) + 1) % 1;
  * AutoRigs `psd` into `out` (inside `folder`) and keys `walk` and `walk_across`. Options (all
  * optional): cycle (s), keys (per cycle), cycles (of walk_across), stance (share), stride, lift,
  * bob, crouch (fractions of the leg length, or pixels when absolute: true), heel, toeOff, arm
- * (degrees), hair (degrees of bounce). Returns the validation checks.
+ * (degrees), hair (degrees of bounce), trail (degrees a hanging chain leans back while walking).
+ * Returns the validation checks.
  */
 export async function buildWalk(folder, psd, out, options = {}) {
   const ws = await Workspace.open([folder]);
@@ -40,10 +42,14 @@ export async function buildWalk(folder, psd, out, options = {}) {
   const setup = await call('sample_pose', {});
   const bone = (pose, n) => pose.bones.find((b) => b.name === n);
   const length = (n) => rig.bones.find((b) => b.name === n).length;
-  const hasHair = rig.bones.some((b) => b.name === 'hair');
+  // Secondary chains: [bone, link index] for hair / tail bones (`hair`, or `hair1`, `hair2`, ...).
+  const chains = rig.bones.flatMap((b) => {
+    const m = /^(?:hair|tail)(?:_[lr])?(\d*)$/.exec(b.name);
+    return m ? [[b.name, m[1] ? Number(m[1]) - 1 : 0]] : [];
+  });
   const hasArm = (side) => rig.bones.some((b) => b.name === `ik_hand_${side}`);
 
-  const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, hair: 6, ...options };
+  const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, hair: 6, trail: 0, ...options };
   const legLen = length('thigh_l') + length('shin_l');
   const size = (v) => (o.absolute ? v : v * legLen);
   const S = size(o.stride), LIFT = size(o.lift), BOB = size(o.bob), CROUCH = size(o.crouch);
@@ -82,8 +88,8 @@ export async function buildWalk(folder, psd, out, options = {}) {
       hipRot: 1.5 * Math.sin(4 * Math.PI * (t - 0.2)),
       chest: -4 + 1.5 * w,
       head: 3 - 1.2 * Math.cos(4 * Math.PI * (t - 0.4)),
-      // Hair trails the bob: it lags and overshoots a little.
-      hair: o.hair * Math.cos(4 * Math.PI * (t - 0.42)),
+      // Hair trails the bob: it lags and overshoots a little, more at each link down a chain.
+      hair: (k) => o.hair * (1 + 0.5 * k) * Math.cos(4 * Math.PI * (t - 0.42 - 0.07 * k)) + (k === 0 ? -o.trail : -o.trail * 0.3),
     };
   };
 
@@ -99,7 +105,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
       key('hip', 'rotate', t, { value: b.hipRot }, last);
       key('chest', 'rotate', t, { value: b.chest }, last);
       key('head', 'rotate', t, { value: b.head }, last);
-      if (hasHair) key('hair', 'rotate', t, { value: b.hair }, last);
+      for (const [name, k] of chains) key(name, 'rotate', t, { value: b.hair(k) }, last);
       for (const [side, off] of [['l', 0], ['r', 0.5]]) {
         const L = leg(mod1(ph + off), side);
         key(`ik_foot_${side}`, 'translate', t, { x: L.x, y: L.y }, last);

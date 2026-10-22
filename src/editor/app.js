@@ -16,6 +16,7 @@ import { WORKSPACES, workspace as workspaceDef } from './workspaces.js';
 import demoUrl from '../../branding/rigbytron/rigbytron.rigby?url&no-inline';
 import walkDemoUrl from '../../branding/rigbytron/rigbytron_side.rigby?url&no-inline';
 import chibiDemoUrl from '../../character/chibi_side.rigby?url&no-inline';
+import adventurerDemoUrl from '../../character/adventurer/adventurer_side.rigby?url&no-inline';
 
 /** The bundled demo project: Rigbytron, the Rigby2D mascot. */
 const DEMO_FILE = 'rigbytron.rigby';
@@ -23,6 +24,7 @@ const DEMO_FILE = 'rigbytron.rigby';
 const WALK_DEMOS = {
   rigbytron: { url: walkDemoUrl, file: 'rigbytron_side.rigby', title: 'Rigbytron' },
   chibi: { url: chibiDemoUrl, file: 'chibi_side.rigby', title: 'Chibi girl' },
+  adventurer: { url: adventurerDemoUrl, file: 'adventurer_side.rigby', title: 'Adventurer' },
 };
 
 /**

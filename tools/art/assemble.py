@@ -38,6 +38,12 @@ def placed(part, far=False, dx=0):
     if p.get('crop_bottom'):
         bb = im.getbbox(); cut = bb[3] - round((bb[3] - bb[1]) * p['crop_bottom'])
         im = im.crop((0, 0, im.width, cut))
+    if p.get('recolor'):
+        # Match a piece drawn in the wrong shade: scale its colours by to / from (outlines stay dark).
+        src, dst = np.array(p['recolor']['from'], float), np.array(p['recolor']['to'], float)
+        px = np.asarray(im).astype(np.float32)
+        px[..., :3] = np.clip(px[..., :3] * (dst / src), 0, 255)
+        im = Image.fromarray(px.astype(np.uint8))
     s = p['scale']
     im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
     if p.get('fade_bottom'):

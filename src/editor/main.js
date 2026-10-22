@@ -52,6 +52,7 @@ function menus() {
       { label: 'Open demo (Rigbytron)', action: () => app.openDemo() },
       { label: 'Open walk demo (Rigbytron side view)', action: () => app.openWalkDemo() },
       { label: 'Open walk demo (chibi girl)', action: () => app.openWalkDemo(true, 'chibi') },
+      { label: 'Open walk demo (adventurer)', action: () => app.openWalkDemo(true, 'adventurer') },
       { label: 'New sample (robot)', action: () => app.newSample() },
       { label: 'Open… (.rigby, or import .json / .skel)', shortcut: 'Ctrl+O', action: () => app.openDialog() },
       'separator',

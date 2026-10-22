@@ -11,7 +11,7 @@
 | `walk.mjs` | Rebuilds the rig and both walks from the PSD: `node character/walk.mjs` |
 
 The walk comes from `tools/walkcycle.mjs`, which fits any AutoRigged side-view character: sizes are
-fractions of the leg length. `walk.mjs` sets a quicker, shorter, bouncier step for the short chibi
+fractions of the leg length. `walk.mjs` sets a quicker, shorter, lighter step for the short chibi
 legs (`cycle`, `stride`, `crouch`, `bob`, `arm`).
 
 Only the near arm is drawn, as one piece with its hand (`merge` in `art/layout.json`): the far arm

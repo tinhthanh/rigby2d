@@ -8,6 +8,6 @@ const anim = p.doc.animations.find((a) => a.name === name);
 const frames = [];
 for (let i = 0; i < Math.round(anim.duration * fps); i++) {
   const quads = poseAt(p.doc, anim, i / fps).quads(p.doc);
-  frames.push(quads.map((q) => ({ image: q.image, kind: q.kind, pos: q.positions, uvs: q.uvs, tris: q.triangles ? Array.from(q.triangles) : null })));
+  frames.push(quads.map((q) => ({ image: q.image, kind: q.kind, pos: q.positions, uvs: q.uvs, tris: q.triangles ? Array.from(q.triangles) : null, alpha: q.color?.[3] ?? 1 })));
 }
 console.log(JSON.stringify(frames));

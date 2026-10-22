@@ -18,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { gaitWalk } from './gait.mjs';
-import { fitLimbPoses, poseAt } from './limbswap.mjs';
+import { blendAt, fitLimbPoses, poseAt, writeBlendKeys } from './limbswap.mjs';
 import { createEditTools } from '../src/mcp/edits.js';
 import { createRiggingTools } from '../src/mcp/rigging.js';
 import { Workspace, createTools } from '../src/mcp/tools.js';
@@ -151,6 +151,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
     const dur = cycles * CYCLE, n = cycles * KEYS;
     const ops = [{ op: 'add_animation', name: anim, duration: dur }];
     const key = keyer(anim, ops);
+    const blends = [];
     for (let k = 0; k <= n; k++) {
       const t = (k / KEYS) * CYCLE, ph = mod1(k / KEYS), last = k === n, b = body(ph);
       key('hip', 'translate', t, b.hip, last);
@@ -160,7 +161,8 @@ export async function buildWalk(folder, psd, out, options = {}) {
       if (limb) {
         const sw = swing(ph, limb.side === 'l' ? -1 : 1);
         key(limb.bone, 'rotate', t, { value: sw }, last);
-        ops.push({ op: 'set_attachment_key', animation: anim, slot: limb.slot, time: t, attachment: poseAt(limb.poses, sw).name });
+        if (limb.blend) blends.push({ time: t, ...blendAt(limb.poses, sw, limb.blendWidth) });
+        else ops.push({ op: 'set_attachment_key', animation: anim, slot: limb.slot, time: t, attachment: poseAt(limb.poses, sw).name });
       }
       for (const [name, k] of chains) key(name, 'rotate', t, { value: b.hair(k) }, last);
       for (const [side, off] of [['l', 0], ['r', 0.5]]) {
@@ -175,6 +177,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
       for (const [t, sx, c] of [[0, 1, 'stepped'], [half, -1, 'stepped'], [dur, -1]]) ops.push({ op: 'set_bone_key', animation: anim, bone: 'root', channel: 'scale', time: t, x: sx, y: 1, ...(c && { curve: c }) });
     }
     await call('batch_edit', { operations: ops });
+    if (blends.length) await writeBlendKeys(folder, out, limb.slot, anim, blends);
   }
 
   // Arm and foot values come from the one-cycle walk (root at rest), repeated for any cycle count.

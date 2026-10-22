@@ -24,6 +24,7 @@ for fr in frames:
     d = ImageDraw.Draw(canvas)
     d.line([(0, (y1 - 0) * scale + 2), (W, (y1 - 0) * scale + 2)], fill=(110, 112, 125), width=2)  # ground
     for q in fr:
+        if q.get('alpha', 1) <= 0: continue
         im = img(q['image']); w, h = im.size
         if q['kind'] == 'mesh':
             P, U, T = q['pos'], q['uvs'], q['tris']
@@ -46,6 +47,7 @@ for fr in frames:
         src = [(0, 0), (w, 0), (w, h)]
         dst = [scr(q['pos'][0]), scr(q['pos'][1]), scr(q['pos'][2])]
         layer = im.transform((W, H), Image.AFFINE, affine_inverse(src, dst), resample=Image.BILINEAR)
+        if q.get('alpha', 1) < 1: layer.putalpha(layer.getchannel('A').point(lambda v, a=q['alpha']: round(v * a)))
         canvas.alpha_composite(layer)
     out_frames.append(canvas.convert('RGB').quantize(colors=128, dither=Image.Dither.NONE))
 out_frames[0].save(out, save_all=True, append_images=out_frames[1:], duration=int(1000 / fps), loop=0, disposal=1)

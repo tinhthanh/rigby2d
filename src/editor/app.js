@@ -15,11 +15,15 @@ import { addSound, sounds, stopAudio } from './audio.js';
 import { WORKSPACES, workspace as workspaceDef } from './workspaces.js';
 import demoUrl from '../../branding/rigbytron/rigbytron.rigby?url&no-inline';
 import walkDemoUrl from '../../branding/rigbytron/rigbytron_side.rigby?url&no-inline';
+import chibiDemoUrl from '../../character/chibi_side.rigby?url&no-inline';
 
 /** The bundled demo project: Rigbytron, the Rigby2D mascot. */
 const DEMO_FILE = 'rigbytron.rigby';
-/** Rigbytron in side view, AutoRigged from layered artwork, with walk cycles. */
-const WALK_DEMO_FILE = 'rigbytron_side.rigby';
+/** Side-view characters AutoRigged from layered artwork, with walk cycles. */
+const WALK_DEMOS = {
+  rigbytron: { url: walkDemoUrl, file: 'rigbytron_side.rigby', title: 'Rigbytron' },
+  chibi: { url: chibiDemoUrl, file: 'chibi_side.rigby', title: 'Chibi girl' },
+};
 
 /**
  * Frame rate of the open project (its output settings). A live binding: modules importing it see
@@ -355,18 +359,19 @@ export class App {
     return io.openProject(file, platform.memoryFs([new File([blob], file)]), this.images);
   }
 
-  /** Opens the side-view Rigbytron playing its walk across the screen, like openDemo. */
-  async openWalkDemo(ask = true) {
+  /** Opens a side-view walk demo (see WALK_DEMOS) playing its walk across the screen, like openDemo. */
+  async openWalkDemo(ask = true, which = 'rigbytron') {
     if (ask && !(await this.confirmDiscard())) return;
+    const demo = WALK_DEMOS[which];
     try {
-      const { doc, warnings } = await this.demoDocument(walkDemoUrl, WALK_DEMO_FILE);
-      this.loadDocument(doc, WALK_DEMO_FILE);
+      const { doc, warnings } = await this.demoDocument(demo.url, demo.file);
+      this.loadDocument(doc, demo.file);
       this.saveTarget = null;
       this.anim = Math.max(0, doc.animations.findIndex((a) => a.name === 'walk_across'));
       this.mode = Mode.Animate;
       this.playing = true;
       this.frameRequest = true;
-      this.setStatus(warnings.length ? `Demo opened with warnings: ${warnings.join('; ')}` : 'Rigbytron walk demo: walk (in place) and walk_across. Save keeps a copy.');
+      this.setStatus(warnings.length ? `Demo opened with warnings: ${warnings.join('; ')}` : `${demo.title} walk demo: walk (in place) and walk_across. Save keeps a copy.`);
     } catch (e) {
       this.setStatus(`Could not open the demo: ${errorText(e)}`);
     }

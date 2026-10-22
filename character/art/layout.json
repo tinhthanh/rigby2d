@@ -103,18 +103,6 @@
  },
  "layers": [
   {
-   "name": "hand_l",
-   "part": "hand",
-   "far": true,
-   "dx": -30
-  },
-  {
-   "name": "arm_l",
-   "part": "arm",
-   "far": true,
-   "dx": -30
-  },
-  {
    "name": "foot_l",
    "part": "foot",
    "far": true,
@@ -147,12 +135,11 @@
    "part": "head"
   },
   {
-   "name": "hand_r",
-   "part": "hand"
-  },
-  {
    "name": "arm_r",
-   "part": "arm"
+   "merge": [
+    "hand",
+    "arm"
+   ]
   }
  ]
 }

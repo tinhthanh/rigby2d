@@ -41,6 +41,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
   const bone = (pose, n) => pose.bones.find((b) => b.name === n);
   const length = (n) => rig.bones.find((b) => b.name === n).length;
   const hasHair = rig.bones.some((b) => b.name === 'hair');
+  const hasArm = (side) => rig.bones.some((b) => b.name === `ik_hand_${side}`);
 
   const o = { cycle: 1, keys: 24, cycles: 8, stance: 0.6, stride: 0.28, lift: 0.095, bob: 0.014, crouch: 0.028, heel: 14, toeOff: -25, arm: 22, hair: 6, ...options };
   const legLen = length('thigh_l') + length('shin_l');
@@ -120,7 +121,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
       const t = (k / KEYS) * CYCLE, s = sampled[k % KEYS], last = k === n;
       for (const side of ['l', 'r']) {
         key(`foot_${side}`, 'rotate', t, { value: s.foot[side] }, last);
-        key(`ik_hand_${side}`, 'translate', t, s.hand[side], last);
+        if (s.hand[side]) key(`ik_hand_${side}`, 'translate', t, s.hand[side], last);
       }
     }
     await call('batch_edit', { operations: ops });
@@ -135,6 +136,8 @@ export async function buildWalk(folder, psd, out, options = {}) {
       // Foot: the world angle the roll asks for, minus what the shin already gives it.
       const d = foot[side].angle + leg(mod1(ph + off), side).roll - bone(pose, `foot_${side}`).rotation;
       s.foot[side] = ((d + 540) % 360) - 180;
+      // A side view often shows one arm only (the far one hides behind the body).
+      if (!hasArm(side)) continue;
       // Arm: swings against the leg on its side, a little behind it, further forward than back.
       let th = sign * o.arm * Math.cos(2 * Math.PI * (ph - 0.06));
       th *= th > 0 ? 1.15 : 0.85;

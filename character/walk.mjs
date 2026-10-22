@@ -7,5 +7,5 @@ import { fileURLToPath } from 'node:url';
 import { buildWalk } from '../tools/walkcycle.mjs';
 
 const folder = fileURLToPath(new URL('.', import.meta.url));
-const checks = await buildWalk(folder, 'chibi_side.psd', 'chibi_side.rigby', { cycle: 0.9, stride: 0.24, crouch: 0.045, bob: 0.018 });
+const checks = await buildWalk(folder, 'chibi_side.psd', 'chibi_side.rigby', { cycle: 0.9, stride: 0.21, crouch: 0.02, bob: 0.012, arm: 16 });
 console.log(JSON.stringify(checks));

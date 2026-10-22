@@ -15,7 +15,8 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
    piece to the model, finds its anchor from its own silhouette (`edge` top/bottom centre, or
    `center`) and puts it on the model point given in `at` (model pixels). `crop_top`,
    `crop_bottom` and `fade_bottom` trim rims that would show at joints; `far: true` darkens the far
-   limbs; layer order is bottom first. `layers/preview.png` shows model, assembly and overlay.
+   limbs; `merge: [parts]` makes one layer of several parts (an arm with its hand, so the wrist
+   never opens); layer order is bottom first. `layers/preview.png` shows model, assembly and overlay.
    Name layers for AutoRig: `head`, `hair_bun`, `torso`, `arm_l`, `hand_l`, `leg_l`, `foot_l`, ...
 4. **PSD.** `node tools/art/topsd.mjs layers/layers.json character.psd`.
 5. **Rig and walk.** `node tools/walkcycle.mjs <folder> character.psd character.rigby` (see

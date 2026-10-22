@@ -26,9 +26,9 @@ def anchor(a, spec):
     rows = np.where(a.any(axis=1))[0]; h = rows[-1] - rows[0]
     return x, y + (h * inset if which == 'top' else -h * inset)
 
-layers = []
-for L in cfg['layers']:
-    p = cfg['parts'][L['part']]
+def placed(part, far=False, dx=0):
+    """The part's image (trimmed, scaled, maybe darkened) and its top-left on the canvas."""
+    p = cfg['parts'][part]
     im = Image.open(f"{parts_dir}/part{p['k']}.png").convert('RGBA')
     im.putalpha(im.getchannel('A').filter(ImageFilter.MinFilter(3)))
     if p.get('crop_top'):
@@ -46,12 +46,25 @@ for L in cfg['layers']:
         f0, f1 = rows[-1] - (rows[-1] - rows[0]) * p['fade_bottom'], rows[-1]
         ramp = np.clip((f1 - np.arange(im.height)) / max(1, f1 - f0), 0, 1)[:, None]
         im.putalpha(Image.fromarray((a0 * ramp).astype(np.uint8)))
-    if L.get('far'):
+    if far:
         rgb = ImageEnhance.Brightness(im.convert('RGB')).enhance(cfg['far_brightness']); rgb.putalpha(im.getchannel('A')); im = rgb
-    a = np.asarray(im.getchannel('A')) > 128
-    ax, ay = anchor(a, p['anchor'])
-    tx, ty = p['at']; dx = L.get('dx', 0)
-    layers.append(dict(name=L['name'], im=im, at=(tx * K + dx - ax, ty * K - ay)))
+    ax, ay = anchor(np.asarray(im.getchannel('A')) > 128, p['anchor'])
+    tx, ty = p['at']
+    return im, (tx * K + dx - ax, ty * K - ay)
+
+layers = []
+for L in cfg['layers']:
+    if 'merge' in L:
+        # Several parts as one layer (e.g. arm and hand, so the wrist never opens), bottom first.
+        pieces = [placed(part, L.get('far'), L.get('dx', 0)) for part in L['merge']]
+        x0 = min(at[0] for _, at in pieces); y0 = min(at[1] for _, at in pieces)
+        x1 = max(at[0] + im.width for im, at in pieces); y1 = max(at[1] + im.height for im, at in pieces)
+        im = Image.new('RGBA', (round(x1 - x0) + 1, round(y1 - y0) + 1))
+        for piece, at in pieces: im.alpha_composite(piece, (round(at[0] - x0), round(at[1] - y0)))
+        layers.append(dict(name=L['name'], im=im, at=(x0, y0)))
+    else:
+        im, at = placed(L['part'], L.get('far'), L.get('dx', 0))
+        layers.append(dict(name=L['name'], im=im, at=at))
 
 model = Image.open(model_file).convert('RGBA')
 W, H = model.width * K, model.height * K

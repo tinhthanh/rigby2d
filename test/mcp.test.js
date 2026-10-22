@@ -129,6 +129,22 @@ test('mcp tools: inspect, describe and sample the Rigbytron project', async () =
   await assert.rejects(tools.sample_pose({ path: RIGBY, skin: 'gold' }), /No skin 'gold'/);
 });
 
+test('mcp tools: the side-view walk demo is valid and keeps the planted foot on the ground', async () => {
+  const { tools } = await toolbox();
+  const side = 'branding/rigbytron/rigbytron_side.rigby';
+  const report = await tools.validate_project({ path: side });
+  assert.equal(report.valid, true);
+  assert.deepEqual(report.warnings, []);
+  const info = await tools.inspect_project({ path: side });
+  assert.deepEqual(info.animations.map((a) => [a.name, a.duration]), [['walk', 1], ['walk_across', 8]]);
+  // Mid-stance of the left foot: flat on the ground where it stands in setup.
+  const foot = async (args) => (await tools.sample_pose({ path: side, ...args })).bones.find((b) => b.name === 'foot_l');
+  const setup = await foot({});
+  const planted = await foot({ animation: 'walk', time: 0.3 });
+  assert.ok(Math.abs(planted.y - setup.y) < 1, `foot y ${planted.y} vs ${setup.y}`);
+  assert.ok(Math.abs(planted.rotation - setup.rotation) < 1);
+});
+
 test('mcp tools: validate finds no problems in the shipped files and reports missing images', async () => {
   const { tmp, tools } = await toolbox();
   for (const p of [RIGBY, SKEL, JSON_FILE]) {

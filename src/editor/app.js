@@ -14,9 +14,12 @@ import * as sample from './sample.js';
 import { addSound, sounds, stopAudio } from './audio.js';
 import { WORKSPACES, workspace as workspaceDef } from './workspaces.js';
 import demoUrl from '../../branding/rigbytron/rigbytron.rigby?url&no-inline';
+import walkDemoUrl from '../../branding/rigbytron/rigbytron_side.rigby?url&no-inline';
 
 /** The bundled demo project: Rigbytron, the Rigby2D mascot. */
 const DEMO_FILE = 'rigbytron.rigby';
+/** Rigbytron in side view, AutoRigged from layered artwork, with walk cycles. */
+const WALK_DEMO_FILE = 'rigbytron_side.rigby';
 
 /**
  * Frame rate of the open project (its output settings). A live binding: modules importing it see
@@ -347,9 +350,26 @@ export class App {
    * tied to a file: Save asks where to keep a copy. `ask` confirms discarding unsaved changes.
    */
   /** The demo project (Rigbytron) with its images loaded; the open document is not replaced. */
-  async demoDocument() {
-    const blob = await (await fetch(demoUrl)).blob();
-    return io.openProject(DEMO_FILE, platform.memoryFs([new File([blob], DEMO_FILE)]), this.images);
+  async demoDocument(url = demoUrl, file = DEMO_FILE) {
+    const blob = await (await fetch(url)).blob();
+    return io.openProject(file, platform.memoryFs([new File([blob], file)]), this.images);
+  }
+
+  /** Opens the side-view Rigbytron playing its walk across the screen, like openDemo. */
+  async openWalkDemo(ask = true) {
+    if (ask && !(await this.confirmDiscard())) return;
+    try {
+      const { doc, warnings } = await this.demoDocument(walkDemoUrl, WALK_DEMO_FILE);
+      this.loadDocument(doc, WALK_DEMO_FILE);
+      this.saveTarget = null;
+      this.anim = Math.max(0, doc.animations.findIndex((a) => a.name === 'walk_across'));
+      this.mode = Mode.Animate;
+      this.playing = true;
+      this.frameRequest = true;
+      this.setStatus(warnings.length ? `Demo opened with warnings: ${warnings.join('; ')}` : 'Rigbytron walk demo: walk (in place) and walk_across. Save keeps a copy.');
+    } catch (e) {
+      this.setStatus(`Could not open the demo: ${errorText(e)}`);
+    }
   }
 
   async openDemo(ask = true) {

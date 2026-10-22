@@ -50,6 +50,7 @@ function menus() {
       { label: 'New game project', action: () => app.newDocument('game') },
       { label: 'New film project', action: () => app.newDocument('film') },
       { label: 'Open demo (Rigbytron)', action: () => app.openDemo() },
+      { label: 'Open walk demo (Rigbytron side view)', action: () => app.openWalkDemo() },
       { label: 'New sample (robot)', action: () => app.newSample() },
       { label: 'Open… (.rigby, or import .json / .skel)', shortcut: 'Ctrl+O', action: () => app.openDialog() },
       'separator',

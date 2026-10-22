@@ -3,7 +3,12 @@
 A character designed for skeletal animation: the costume hides the joints that show seams on a
 cut-out rig.
 
-- Long jacket sleeves cover the elbow and wrist; the arm is one piece with its hand.
+- Long jacket sleeves cover the elbow and wrist. The arm is **three drawings** that swap as it
+  swings (`art/arms.png`, cut into `art/arms/`): swung forward with the elbow bent and the hand
+  curled, hanging, swung back with the arm straight. One picture bent by a mesh cannot change the
+  hand's shape or the sleeve's folds; drawings can. The upper arm bone rotates continuously and
+  each drawing is turned to line up with it, so a swap changes the shape, never the direction
+  (`tools/limbswap.mjs`, measured with `tools/art/limbposes.py` into `art/arm_poses.json`).
 - Tall boots cover the ankle; each leg is one piece from the hip to the ankle (trouser and boot
   shaft), so AutoRig bends it as a weighted mesh at the knee.
 - The jacket hem covers the top of the legs; the scarf wrap hides the neck.
@@ -15,6 +20,7 @@ cut-out rig.
 | --- | --- |
 | `art/model.png` | The standard: the whole character in side view, standing. Sets proportions and positions |
 | `art/parts.png` | The same character cut into pieces |
+| `art/arms.png`, `art/arms/`, `art/arm_poses.json` | The three arm drawings, cut and measured (pivot at the shoulder, drawn angle) |
 | `art/layout.json` | How the pieces sit on the model (the boot foot is recoloured to match the shaft) |
 | `adventurer_side.psd` | The layered artwork built with `tools/art/` |
 | `adventurer_side.rigby` | AutoRigged, with `walk` (in place, 0.95 s) and `walk_across`. The editor opens it from *File ▸ Open walk demo (adventurer)* |

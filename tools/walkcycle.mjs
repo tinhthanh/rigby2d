@@ -17,6 +17,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { fitLimbPoses, poseAt } from './limbswap.mjs';
 import { createEditTools } from '../src/mcp/edits.js';
 import { createRiggingTools } from '../src/mcp/rigging.js';
 import { Workspace, createTools } from '../src/mcp/tools.js';
@@ -38,6 +39,9 @@ export async function buildWalk(folder, psd, out, options = {}) {
   const tools = Object.fromEntries([...createTools(ws), ...createEditTools(ws), ...createRiggingTools(ws)].map((t) => [t.name, t]));
   const call = (name, args) => tools[name].handler({ path: out, ...args });
   await tools.autorig.handler({ psd_file: psd, output: out, overwrite: true });
+  // Pose drawings for an arm (see tools/limbswap.mjs): its upper bone swings and the drawings swap.
+  const limb = options.limbPoses;
+  if (limb) await fitLimbPoses(folder, out, limb);
 
   const rig = await call('describe_rig', {});
   const setup = await call('sample_pose', {});
@@ -95,6 +99,12 @@ export async function buildWalk(folder, psd, out, options = {}) {
     };
   };
 
+  /** Arm swing in degrees (positive forward): against the leg on its side, a little behind it, further forward than back. */
+  const swing = (ph, sign) => {
+    const th = sign * o.arm * Math.cos(2 * Math.PI * (ph - 0.06));
+    return th * (th > 0 ? 1.15 : 0.85);
+  };
+
   const keyer = (anim, ops) => (bone, channel, time, v, last) => ops.push({ op: 'set_bone_key', animation: anim, bone, channel, time, ...v, ...(!last && { curve: 'linear' }) });
 
   async function bodyAndLegs(anim, cycles) {
@@ -107,6 +117,11 @@ export async function buildWalk(folder, psd, out, options = {}) {
       key('hip', 'rotate', t, { value: b.hipRot }, last);
       key('chest', 'rotate', t, { value: b.chest }, last);
       key('head', 'rotate', t, { value: b.head }, last);
+      if (limb) {
+        const sw = swing(ph, limb.side === 'l' ? -1 : 1);
+        key(limb.bone, 'rotate', t, { value: sw }, last);
+        ops.push({ op: 'set_attachment_key', animation: anim, slot: limb.slot, time: t, attachment: poseAt(limb.poses, sw).name });
+      }
       for (const [name, k] of chains) key(name, 'rotate', t, { value: b.hair(k) }, last);
       for (const [side, off] of [['l', 0], ['r', 0.5]]) {
         const L = leg(mod1(ph + off), side);
@@ -147,9 +162,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
       s.foot[side] = ((d + 540) % 360) - 180;
       // A side view often shows one arm only (the far one hides behind the body).
       if (!hasArm(side)) continue;
-      // Arm: swings against the leg on its side, a little behind it, further forward than back.
-      let th = sign * o.arm * Math.cos(2 * Math.PI * (ph - 0.06));
-      th *= th > 0 ? 1.15 : 0.85;
+      const th = swing(ph, sign);
       const sh = bone(pose, `upperarm_${side}`), sh0 = bone(setup, `upperarm_${side}`), tg0 = bone(setup, `ik_hand_${side}`);
       const reach0 = Math.hypot(tg0.x - sh0.x, tg0.y - sh0.y), th0 = Math.atan2(tg0.x - sh0.x, sh0.y - tg0.y) / D;
       const R = reach0 * (0.985 - o.elbow * Math.max(0, th / o.arm)); // the elbow bends as the arm swings forward

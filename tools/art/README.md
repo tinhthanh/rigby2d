@@ -25,6 +25,11 @@ Python 3 with `pillow`, `numpy` and `scipy` (`python3 -m venv .venv && .venv/bin
 6. **Preview.** `node tools/art/frames.mjs character.rigby walk 30 > f.json` then
    `python tools/art/gif.py f.json layers/ walk.gif 0.3 x0 x1 y0 y1 30` (world bounds, Y up).
 
+**Pose drawings for a limb.** A limb that must change shape as it moves (a hand that curls on
+the forward swing) can be several drawings instead of one bending picture: cut them with `cut.py`,
+measure them with `python tools/art/limbposes.py poses.json name=piece.png ...` and pass them to
+`tools/walkcycle.mjs` as `limbPoses` (see `tools/limbswap.mjs` and `character/adventurer/walk.mjs`).
+
 `character/art/` (chibi girl) and `character/adventurer/art/` hold models, parts and layouts as
 examples. A costume that covers the joints (long sleeves, boots, a hem over the hips) hides the
 seams of a cut-out rig best; see `character/adventurer/README.md`.

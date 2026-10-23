@@ -39,7 +39,8 @@ export function curve(knots, p) {
  * (lengths), thighAngle, shinAngle, footAngle (world degrees in the setup pose), ankle: [x, y],
  * footLength, heel: [x, y] (on the ground in the setup pose) }; offsets = { l: 0, r: 0.5 } (phase
  * of each leg's heel strike); scale shrinks or grows the hip and knee angles (1 = human); heel and
- * toeOff are the foot roll at heel strike and toe off (degrees). Hip and knee follow the gait
+ * toeOff are the foot roll at heel strike and toe off (degrees); smoothing is the width of the
+ * smoothing pass (a share of the cycle). Hip and knee follow the gait
  * data; the foot is placed flat during stance and rolls over the heel at contact and over the toe
  * at push-off, so cartoon feet longer than a human's still meet the ground. Returns
  * { at(phase) => { pelvis: [x, y], legs: { side: { ankle: [x, y], foot } } }, stride }: pelvis
@@ -47,16 +48,16 @@ export function curve(knots, p) {
  * setup position (pelvis included), foot the foot's world angle; stride is the distance
  * travelled per cycle.
  */
-export function gaitWalk(legs, { offsets = { l: 0, r: 0.5 }, scale = 1, heel = 14, toeOff = -25, samples = 400 } = {}) {
+export function gaitWalk(legs, { offsets = { l: 0, r: 0.5 }, scale = 1, heel = 14, toeOff = -25, smoothing = 0.02, samples = 400 } = {}) {
   const sides = Object.keys(offsets);
   const smooth = (x) => x * x * x * (x * (6 * x - 15) + 10);
   /** Foot roll (degrees from flat) at leg phase q, and whether the foot turns about its toe. */
   const roll = (q) => {
-    if (q < 0.1) return { roll: heel * (1 - smooth(q / 0.1)), pivot: 'heel' };
-    if (q < 0.45) return { roll: 0, pivot: null };
-    if (q < STANCE) return { roll: toeOff * smooth((q - 0.45) / (STANCE - 0.45)), pivot: 'toe' };
+    if (q < 0.1) return { roll: heel * (1 - smooth(q / 0.1)), pivot: 'heel', stance: true };
+    if (q < 0.45) return { roll: 0, pivot: null, stance: true };
+    if (q < STANCE) return { roll: toeOff * smooth((q - 0.45) / (STANCE - 0.45)), pivot: 'toe', stance: true };
     const v = (q - STANCE) / (1 - STANCE);
-    return { roll: toeOff + (heel - toeOff) * smooth(v) - 12 * Math.sin(Math.PI * v), pivot: null };
+    return { roll: toeOff + (heel - toeOff) * smooth(v) - 12 * Math.sin(Math.PI * v), pivot: null, stance: false };
   };
   // Each leg with the pelvis at rest: ankle from the hip and knee angles, the foot's angle, and how
   // far the roll lifts the ankle (turning about the toe or the heel, which stay down).
@@ -71,9 +72,20 @@ export function gaitWalk(legs, { offsets = { l: 0, r: 0.5 }, scale = 1, heel = 1
     const toe0 = [g.footLength * Math.cos(f0), g.footLength * Math.sin(f0)];
     const heel0 = [g.heel[0] - g.ankle[0], g.heel[1] - g.ankle[1]];
     const turn = ([x, y]) => [x * Math.cos(f - f0) - y * Math.sin(f - f0), x * Math.sin(f - f0) + y * Math.cos(f - f0)];
+    const about = (pt, deg) => {
+      const a = (deg - g.footAngle) * D;
+      return [pt[0] - (pt[0] * Math.cos(a) - pt[1] * Math.sin(a)), pt[1] - (pt[0] * Math.sin(a) + pt[1] * Math.cos(a))];
+    };
     let lift = [0, 0];
-    if (r.pivot === 'toe') { const t = turn(toe0); lift = [toe0[0] - t[0], toe0[1] - t[1]]; }
-    if (r.pivot === 'heel') { const h = turn(heel0); lift = [heel0[0] - h[0], heel0[1] - h[1]]; }
+    if (r.pivot === 'toe') lift = about(toe0, g.footAngle + r.roll);
+    if (r.pivot === 'heel') lift = about(heel0, g.footAngle + r.roll);
+    if (!r.stance && !r.pivot) {
+      // In the air the ankle hands over smoothly from where the toe pivot left it to where the heel
+      // pivot will take it, so there is no jump at toe off or heel strike.
+      const v = (q - STANCE) / (1 - STANCE), e = smooth(v);
+      const off = about(toe0, g.footAngle + toeOff), on = about(heel0, g.footAngle + heel);
+      lift = [off[0] + (on[0] - off[0]) * e, off[1] + (on[1] - off[1]) * e];
+    }
     const low = Math.min(...[turn(toe0), turn(heel0)].map((v) => v[1])) - heel0[1]; // lowest point below the ankle's flat height
     return [s, { ankle: [ax, ay], lift, foot: g.footAngle + r.roll, stance: q < STANCE, low }];
   }));
@@ -94,21 +106,44 @@ export function gaitWalk(legs, { offsets = { l: 0, r: 0.5 }, scale = 1, heel = 1
     table.push({ legs: legsAt, support, drop: -height(support), travel });
   }
   const stride = travel;
-  const at = (phase) => {
-    const x = (((phase % 1) + 1) % 1) * samples, i = Math.min(samples - 1, Math.floor(x)), u = x - i;
-    const a = table[i], b = table[i + 1];
-    const lerp = (m, n) => m + (n - m) * u;
-    const pelvis = [lerp(a.travel, b.travel) - (stride * (i + u)) / samples, lerp(a.drop, b.drop)];
-    const out = {};
+  // Every channel at each sample, then smoothed around the cycle: the hand-over from one supporting
+  // leg to the other and the scuff guard leave corners that a smoothing pass rounds off.
+  const channels = [];
+  for (let i = 0; i < samples; i++) {
+    const a = table[i];
+    const pelvis = [a.travel - (stride * i) / samples, a.drop];
+    const row = [...pelvis];
     for (const s of sides) {
-      const A = a.legs[s], B = b.legs[s];
-      const ax = lerp(A.ankle[0] + A.lift[0], B.ankle[0] + B.lift[0]) + pelvis[0];
-      let ay = lerp(A.ankle[1] + A.lift[1], B.ankle[1] + B.lift[1]) + pelvis[1];
+      const A = a.legs[s];
+      const ax = A.ankle[0] + A.lift[0] + pelvis[0];
+      let ay = A.ankle[1] + A.lift[1] + pelvis[1];
       // A swinging foot longer than a human's would scuff the ground: lift it clear.
-      ay += Math.max(0, -(ay - legs[s].ankle[1] + lerp(A.low, B.low)));
-      out[s] = { ankle: [ax - legs[s].ankle[0], ay - legs[s].ankle[1]], foot: lerp(A.foot, B.foot) };
+      ay += Math.max(0, -(ay - legs[s].ankle[1] + A.low));
+      row.push(ax - legs[s].ankle[0], ay - legs[s].ankle[1], A.foot);
     }
-    return { pelvis, legs: out };
+    channels.push(row);
+  }
+  const smoothed = smoothCycle(channels, smoothing * samples);
+  const at = (phase) => {
+    const x = (((phase % 1) + 1) % 1) * samples, i = Math.floor(x) % samples, u = x - Math.floor(x);
+    const a = smoothed[i], b = smoothed[(i + 1) % samples];
+    const v = a.map((m, k) => m + (b[k] - m) * u);
+    const out = {};
+    sides.forEach((s, k) => (out[s] = { ankle: [v[2 + 3 * k], v[3 + 3 * k]], foot: v[4 + 3 * k] }));
+    return { pelvis: [v[0], v[1]], legs: out };
   };
   return { at, stride };
+}
+
+/** Gaussian smoothing of rows of numbers around a cycle (sigma in samples; 0 leaves them). */
+function smoothCycle(rows, sigma) {
+  if (!(sigma > 0)) return rows;
+  const n = rows.length, r = Math.ceil(3 * sigma);
+  const w = Array.from({ length: 2 * r + 1 }, (_, k) => Math.exp(-((k - r) ** 2) / (2 * sigma * sigma)));
+  const total = w.reduce((a, b) => a + b, 0);
+  return rows.map((_, i) => rows[0].map((__, c) => {
+    let sum = 0;
+    for (let k = -r; k <= r; k++) sum += w[k + r] * rows[(((i + k) % n) + n) % n][c];
+    return sum / total;
+  }));
 }

@@ -22,6 +22,6 @@ const limbPoses = {
   poses: measured.map((p) => ({ ...p, file: path.join(folder, p.file), swing: p.angle })),
 };
 const checks = await buildWalk(folder, 'adventurer_side.psd', 'adventurer_side.rigby', {
-  gait: 'data', cycle: 1.0, keys: 32, arm: 24, nod: 3, hair: 5, trail: 10, limbPoses,
+  gait: 'data', cycle: 1.0, keys: 60, smoothing: 0.035, arm: 24, nod: 3, hair: 5, trail: 10, limbPoses,
 });
 console.log(JSON.stringify(checks));

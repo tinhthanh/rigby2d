@@ -21,7 +21,9 @@ cut-out rig.
 - The walk follows human gait data (`gait: 'data'`, see `tools/gait.mjs`): hip and knee angles over
   the cycle as measured in people, the foot planted flat with heel strike and toe off, and the
   pelvis bob and forward surge worked out from the planted foot, so the timing is uneven like a
-  real walk instead of a smooth wave. The head nods a moment after each landing.
+  real walk instead of a smooth wave. The head nods a moment after each landing. Every channel is smoothed
+  around the cycle (`smoothing: 0.035`) and keyed 60 times per cycle, so the hand-over between the
+  supporting legs and the lift at toe off carry no jolts; the planted foot moves under 1 px.
 
 | File | Use |
 | --- | --- |

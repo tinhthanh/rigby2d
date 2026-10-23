@@ -74,7 +74,7 @@ export async function buildWalk(folder, psd, out, options = {}) {
       // The heel a little behind the ankle, on the ground (y = 0).
       footLength: foot[s].len, heel: [ft.x - 0.2 * foot[s].len, 0],
     }];
-  })), { scale: o.gaitScale ?? 1, heel: o.heel, toeOff: o.toeOff }) : null;
+  })), { scale: o.gaitScale ?? 1, heel: o.heel, toeOff: o.toeOff, smoothing: o.smoothing }) : null;
   // Pelvis height over the cycle, for the head's follow-through (0 at the top, 1 at the bottom).
   const lowness = (() => {
     if (!model) return null;
